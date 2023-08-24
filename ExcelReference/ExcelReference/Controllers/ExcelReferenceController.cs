@@ -21,7 +21,7 @@ namespace ExcelReference.Controllers
         [HttpGet]
         public string GetExcel()
         {
-            var filePath = Path.Combine(Path.GetTempPath(), @"D:\Csharpwork\ExcelReference.xlsx");
+            var filePath = Path.Combine(Path.GetTempPath(), @"D:\Csharpwork\type.xlsx");
             //string filePath = @"D:\Csharpwork\Reference.xlsx";
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using (var package = new ExcelPackage())
@@ -46,6 +46,7 @@ namespace ExcelReference.Controllers
                 var Payment = _dbContext.L_PaymentCategory.ToList();
                 var Utility = _dbContext.L_Utility.ToList();
 
+                
 
                 for (int i = 0; i < customer.Count; i++)
                 {
@@ -61,12 +62,15 @@ namespace ExcelReference.Controllers
                 {
                     sheet2.Cells[i + 2, 3].Value = Utility[i].UtilityName;
                 }
-
+                sheet1.Cells["G2"].Style.Numberformat.Format = "yyyy/mm/dd";
                 var customerTypeRange = sheet2.Cells[2, 1, customer.Count + 1, 1];
                 var paymentMethodRange = sheet2.Cells[2, 2, Payment.Count + 1, 2];
                 var utilityNameRange = sheet2.Cells[2, 3, Utility.Count + 1, 3];
 
-                
+                var headerCells = sheet1.Cells["A1:I1"];
+                headerCells.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                headerCells.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+
                 var customerType = sheet1.DataValidations.AddListValidation("A2:A1000");
                 customerType.Formula.ExcelFormula = $"Lookup!${customerTypeRange.Address}";
 
@@ -76,6 +80,8 @@ namespace ExcelReference.Controllers
                 var utilityName = sheet1.DataValidations.AddListValidation("F2:F1000");
                 utilityName.Formula.ExcelFormula = $"Lookup!${utilityNameRange.Address}";
 
+                var numericColumnRange = sheet1.Cells[2, 9, 1000, 9]; // Assuming column I
+                numericColumnRange.Style.Numberformat.Format = "#,##0.00"; // Format for double values
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     package.SaveAs(fileStream);
