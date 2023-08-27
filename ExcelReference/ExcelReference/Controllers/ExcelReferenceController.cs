@@ -1,7 +1,11 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
+﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Entity;
+using System.Linq;
+using Entity.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using OfficeOpenXml.DataValidation;
 
@@ -19,10 +23,10 @@ namespace ExcelReference.Controllers
         }
 
         [HttpGet]
-        public string GetExcel()
+        public object GetExcel()
         {
-            var filePath = Path.Combine(Path.GetTempPath(), @"D:\Csharpwork\type.xlsx");
-            //string filePath = @"D:\Csharpwork\Reference.xlsx";
+            var filePath = Path.Combine(Path.GetTempPath(), @"D:\Csharpwork\Reference.xlsx");
+
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using (var package = new ExcelPackage())
             {
@@ -40,22 +44,62 @@ namespace ExcelReference.Controllers
                 sheet2.Cells["A1"].Value = "CustomerTypeName";
                 sheet2.Cells["B1"].Value = "paymntCategroyCode";
                 sheet2.Cells["C1"].Value = "UtilityName";
-                package.SaveAs(new System.IO.FileInfo(filePath));
+                //package.SaveAs(new System.IO.FileInfo(filePath));
 
-                var customer = _dbContext.L_CustomerType.ToList();
-                var Payment = _dbContext.L_PaymentCategory.ToList();
-                var Utility = _dbContext.L_Utility.ToList();
+                var acceptLanguageHeader = HttpContext.Request.Headers["Accept-Language"].ToString();
+                var preferredLanguages = acceptLanguageHeader
+               .Split(',')
+               .Select(language => language.Split(';')[0])
+               .ToList().FirstOrDefault().ToString();
 
-                
+                List<L_CustomerType> customer = new List<L_CustomerType>();
+                List<L_PaymentCategory> Payment = new List<L_PaymentCategory>();
+                List<UtilityModel> Utility = new List<UtilityModel>();
+
+                if (preferredLanguages == "JP")
+                {
+                    customer = _dbContext.L_CustomerType.ToList();
+                    customer.Select(data =>
+                    {
+                        data.CustomerTypeName = data.NativeDescription;
+                        return data;
+                    }).ToList();
+
+                    Payment = _dbContext.L_PaymentCategory.ToList();
+                    Payment.Select(data =>
+                    {
+                        data.PaymentCategoryCode = data.NativeDescription;
+                        return data;
+                    }).ToList();
+
+                    Utility = _dbContext.L_Utility.ToList();
+
+                    Utility.Select(data =>
+                    {
+                        data.UtilityName = data.NativeDescription;
+                        return data;
+                    }).ToList();
+                }
+                else
+                {
+                    customer = _dbContext.L_CustomerType.ToList();
+                    Payment = _dbContext.L_PaymentCategory.ToList();
+                    Utility = _dbContext.L_Utility.ToList();
+                }
 
                 for (int i = 0; i < customer.Count; i++)
                 {
                     sheet2.Cells[i + 2, 1].Value = customer[i].CustomerTypeName;
+
                 }
+
+                var priceColumn = sheet1.Cells[2, 9, customer.Count + 1, 9];
+                priceColumn.Style.Numberformat.Format = "0.00";
 
                 for (int i = 0; i < Payment.Count; i++)
                 {
                     sheet2.Cells[i + 2, 2].Value = Payment[i].PaymentCategoryCode;
+
                 }
 
                 for (int i = 0; i < Utility.Count; i++)
@@ -80,17 +124,19 @@ namespace ExcelReference.Controllers
                 var utilityName = sheet1.DataValidations.AddListValidation("F2:F1000");
                 utilityName.Formula.ExcelFormula = $"Lookup!${utilityNameRange.Address}";
 
-                var numericColumnRange = sheet1.Cells[2, 9, 1000, 9]; // Assuming column I
-                numericColumnRange.Style.Numberformat.Format = "#,##0.00"; // Format for double values
+
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     package.SaveAs(fileStream);
                 }
 
             }
-            return "Excel Sheet successfully create";
+            var fileStreamResult = new FileStreamResult(new FileStream(filePath, FileMode.Open), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            fileStreamResult.FileDownloadName = "Consumer.xlsx";
+            return fileStreamResult;
         }
 
     }
 }
+
 

@@ -16,5 +16,7 @@ namespace Entity.Model
         public int UtilityId { get; set; }
 
         public string? UtilityName { get;set; }
+
+        public string? NativeDescription { get; set; }
     }
 }

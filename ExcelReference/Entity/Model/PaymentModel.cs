@@ -15,5 +15,7 @@ namespace Entity.Model
         public int PaymentCategoryId { get; set; }
 
         public string? PaymentCategoryCode { get; set; }
+
+        public string? NativeDescription { get; set; }
     }
 }
