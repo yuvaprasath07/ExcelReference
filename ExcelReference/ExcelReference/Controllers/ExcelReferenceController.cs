@@ -1,13 +1,10 @@
-﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Entity;
-using System.Linq;
+﻿using Entity;
 using Entity.Model;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
-using OfficeOpenXml.DataValidation;
+using Newtonsoft.Json.Linq;
+using System.IO.Packaging;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ExcelReference.Controllers
 {
@@ -22,41 +19,60 @@ namespace ExcelReference.Controllers
             _dbContext = dbContext;
         }
 
-        [HttpGet]
+        [HttpGet("ExcelDownload")]
         public object GetExcel()
         {
             var filePath = Path.Combine(Path.GetTempPath(), @"D:\Csharpwork\Reference.xlsx");
 
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
             using (var package = new ExcelPackage())
             {
-                var sheet1 = package.Workbook.Worksheets.Add("CustomerType");
-                var sheet2 = package.Workbook.Worksheets.Add("Lookup");
-                sheet1.Cells["A1"].Value = "Customer type";
-                sheet1.Cells["B1"].Value = "Corporate Name";
-                sheet1.Cells["C1"].Value = "Corporate Name Kana";
-                sheet1.Cells["D1"].Value = "contract_postal code";
-                sheet1.Cells["E1"].Value = "Payment Method";
-                sheet1.Cells["F1"].Value = "area";
-                sheet1.Cells["G1"].Value = "Scheduled supply start date";
-                sheet1.Cells["H1"].Value = "Weighing day";
-                sheet1.Cells["I1"].Value = "main_basic unit price";
-                sheet2.Cells["A1"].Value = "CustomerTypeName";
-                sheet2.Cells["B1"].Value = "paymntCategroyCode";
-                sheet2.Cells["C1"].Value = "UtilityName";
-                //package.SaveAs(new System.IO.FileInfo(filePath));
-
                 var acceptLanguageHeader = HttpContext.Request.Headers["Accept-Language"].ToString();
-                var preferredLanguages = acceptLanguageHeader
-               .Split(',')
+                var preferredLanguages = acceptLanguageHeader.Split(',')
                .Select(language => language.Split(';')[0])
                .ToList().FirstOrDefault().ToString();
+
+
+                var sheet1 = package.Workbook.Worksheets.Add("CustomerType");
+                var sheet2 = package.Workbook.Worksheets.Add("Lookup");
+
+                if (!(preferredLanguages.Contains("JP")))
+                {
+                    sheet1.Cells["A1"].Value = "Customer type";
+                    sheet1.Cells["B1"].Value = "Corporate Name";
+                    sheet1.Cells["C1"].Value = "Corporate Name Kana";
+                    sheet1.Cells["D1"].Value = "contract_postal code";
+                    sheet1.Cells["E1"].Value = "Payment Method";
+                    sheet1.Cells["F1"].Value = "area";
+                    sheet1.Cells["G1"].Value = "Scheduled supply start date";
+                    sheet1.Cells["H1"].Value = "Weighing day";
+                    sheet1.Cells["I1"].Value = "main_basic unit price";
+                    sheet2.Cells["A1"].Value = "CustomerTypeName";
+                    sheet2.Cells["B1"].Value = "paymntCategroyCode";
+                    sheet2.Cells["C1"].Value = "UtilityName";
+                }
+                else
+                {
+                    sheet1.Cells["A1"].Value = "顧客タイプ";
+                    sheet1.Cells["B1"].Value = "法人名";
+                    sheet1.Cells["C1"].Value = "法人名カナ";
+                    sheet1.Cells["D1"].Value = "契_郵便番号";
+                    sheet1.Cells["E1"].Value = "支払方法";
+                    sheet1.Cells["F1"].Value = "エリア";
+                    sheet1.Cells["G1"].Value = "供給開始予定月";
+                    sheet1.Cells["H1"].Value = "計量日";
+                    sheet1.Cells["I1"].Value = "主_基本料金単価";
+                    sheet2.Cells["A1"].Value = "顧客タイプ";
+                    sheet2.Cells["B1"].Value = "支払いカテゴリコード";
+                    sheet2.Cells["C1"].Value = "ユーティリティ名";
+                }
 
                 List<L_CustomerType> customer = new List<L_CustomerType>();
                 List<L_PaymentCategory> Payment = new List<L_PaymentCategory>();
                 List<UtilityModel> Utility = new List<UtilityModel>();
 
-                if (preferredLanguages == "JP")
+                if (preferredLanguages.Contains("JP"))
                 {
                     customer = _dbContext.L_CustomerType.ToList();
                     customer.Select(data =>
@@ -87,6 +103,7 @@ namespace ExcelReference.Controllers
                     Utility = _dbContext.L_Utility.ToList();
                 }
 
+
                 for (int i = 0; i < customer.Count; i++)
                 {
                     sheet2.Cells[i + 2, 1].Value = customer[i].CustomerTypeName;
@@ -106,6 +123,7 @@ namespace ExcelReference.Controllers
                 {
                     sheet2.Cells[i + 2, 3].Value = Utility[i].UtilityName;
                 }
+
                 sheet1.Cells["G2"].Style.Numberformat.Format = "yyyy/mm/dd";
                 var customerTypeRange = sheet2.Cells[2, 1, customer.Count + 1, 1];
                 var paymentMethodRange = sheet2.Cells[2, 2, Payment.Count + 1, 2];
@@ -136,7 +154,57 @@ namespace ExcelReference.Controllers
             return fileStreamResult;
         }
 
+        [HttpGet("Country")]
+  public object GetCountry()
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("DropdownSheet");
+                var countries = new string[] { "USA", "Canada", "UK", "Australia" };
+                var cities = new System.Collections.Generic.Dictionary<string, string[]>
+                {
+                    { "USA", new string[] { "New York", "Los Angeles", "Chicago" } },
+                    { "Canada", new string[] { "Toronto", "Vancouver", "Montreal" } },
+                    { "UK", new string[] { "London", "Manchester", "Birmingham" } },
+                    { "Australia", new string[] { "Sydney", "Melbourne", "Brisbane" } }
+                };
+                worksheet.Cells["A1"].Value = "Country";
+                var validationList = worksheet.DataValidations.AddListValidation("A1");
+                validationList.Formula.Values.Add("\"" + string.Join(",", countries) + "\"");
+                FileInfo files = new FileInfo("D:\\Csharpwork\\EOSEcxel\\ExcelDropdownExample.xlsx");
+                package.SaveAs(files);
+            }
+            return "Sucess";
+        }
     }
+    
 }
+
+    
+
+
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
 
 
