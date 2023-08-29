@@ -129,7 +129,7 @@ namespace ExcelReference.Controllers
                     sheet2.Cells[i + 2, 3].Value = Utility[i].UtilityName;
                 }
 
-                sheet1.Cells["G2"].Style.Numberformat.Format = "yyyy/mm/dd";
+                sheet1.Cells["G2:G1000"].Style.Numberformat.Format = "yyyy/mm/dd";
                 var customerTypeRange = sheet2.Cells[2, 1, customer.Count + 1, 1];
                 var paymentMethodRange = sheet2.Cells[2, 2, Payment.Count + 1, 2];
                 var utilityNameRange = sheet2.Cells[2, 3, Utility.Count + 1, 3];
