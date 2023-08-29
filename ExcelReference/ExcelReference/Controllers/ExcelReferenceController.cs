@@ -5,6 +5,11 @@ using OfficeOpenXml;
 using Newtonsoft.Json.Linq;
 using System.IO.Packaging;
 using System.Reflection.Metadata.Ecma335;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+using NPOI.SS.Util;
+using NPOI.HSSF.UserModel;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 
 namespace ExcelReference.Controllers
 {
@@ -155,38 +160,64 @@ namespace ExcelReference.Controllers
         }
 
         [HttpGet("Country")]
-  public object GetCountry()
+        public object GetCountry()
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using (var package = new ExcelPackage())
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+    using (var package = new ExcelPackage())
+    {
+        // Create the "Countries" sheet with a dropdown list
+        var countries = new string[] { "USA", "Canada", "UK", "Australia" };
+        var worksheetCountries = package.Workbook.Worksheets.Add("Countries");
+
+        worksheetCountries.Cells["A1"].Value = "Country";
+        worksheetCountries.Cells["B1"].Value = "City";
+        var validationList = worksheetCountries.DataValidations.AddListValidation("A2");
+        validationList.Formula.Values.Add(string.Join(",", countries));
+
+        // Create the "Cities" sheet
+        var cities = new Dictionary<string, string[]>
+        {
+            { "USA", new string[] { "New York", "Los Angeles", "Chicago" } },
+            { "Canada", new string[] { "Toronto", "Vancouver", "Montreal" } },
+            { "UK", new string[] { "London", "Manchester", "Birmingham" } },
+            { "Australia", new string[] { "Sydney", "Melbourne", "Brisbane" } }
+        };
+        var worksheetCities = package.Workbook.Worksheets.Add("Cities");
+        worksheetCities.Cells["A1"].Value = "Country";
+        worksheetCities.Cells["B1"].Value = "City";
+
+        // Populate the "Cities" sheet with separate columns for each country
+        int row = 2;
+        foreach (var country in cities.Keys)
+        {
+            worksheetCities.Cells["A" + row].Value = country;
+            int column = 2; // Starting from column B (index 2)
+            foreach (var city in cities[country])
             {
-                var worksheet = package.Workbook.Worksheets.Add("DropdownSheet");
-                var countries = new string[] { "USA", "Canada", "UK", "Australia" };
-                var cities = new System.Collections.Generic.Dictionary<string, string[]>
-                {
-                    { "USA", new string[] { "New York", "Los Angeles", "Chicago" } },
-                    { "Canada", new string[] { "Toronto", "Vancouver", "Montreal" } },
-                    { "UK", new string[] { "London", "Manchester", "Birmingham" } },
-                    { "Australia", new string[] { "Sydney", "Melbourne", "Brisbane" } }
-                };
-                worksheet.Cells["A1"].Value = "Country";
-                var validationList = worksheet.DataValidations.AddListValidation("A1");
-                validationList.Formula.Values.Add("\"" + string.Join(",", countries) + "\"");
-                FileInfo files = new FileInfo("D:\\Csharpwork\\EOSEcxel\\ExcelDropdownExample.xlsx");
-                package.SaveAs(files);
+                worksheetCities.Cells[row, column].Value = city;
+                column++;
             }
-            return "Sucess";
+            row++;
+        }
+
+        // Add formulas to columns C and D in the "Countries" sheet to show cities based on the selected country
+        int lastRow = countries.Length + 1;
+        for (int i = 2; i <= lastRow; i++)
+        {
+            string countryCell = $"A{i}";
+            worksheetCountries.Cells[$"C{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!B$2:B$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
+            worksheetCountries.Cells[$"D{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!C$2:C$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
+        }
+
+        FileInfo fileInfo = new FileInfo("D:\\Csharpwork\\EOSEcxel\\CountryCities.xlsx");
+        package.SaveAs(fileInfo);
+    }
+
+    return "File created successfully";
         }
     }
-    
 }
 
-    
-
-
-
-    
-    
 
 
 
@@ -197,12 +228,35 @@ namespace ExcelReference.Controllers
 
 
 
+//int columnOffset = 4;
+
+//// Add a formula to the "Countries" sheet to dynamically show cities in column B
+//worksheetCountries.Cells["B2"].Formula = "=IF(A2=\"\", \"\", IFERROR(INDEX(Cities!$" + ExcelCellAddress.GetColumnLetter(columnOffset) + "$2:$" + ExcelCellAddress.GetColumnLetter(columnOffset) + "$100, MATCH(A2, Cities!$A$2:$A$100, 0)), \"\"))";
+
+//// Add formulas to columns C and D to show cities based on selected country in column A
+//worksheetCountries.Cells["C2"].Formula = $"=B2";
+//worksheetCountries.Cells["D2"].Formula = $"=B2";
+//worksheetCountries.Cells["C3"].Formula = $"=B2";
+//worksheetCountries.Cells["D3"].Formula = $"=B2";
+//worksheetCountries.Cells["C4"].Formula = $"=B2";
+//worksheetCountries.Cells["D4"].Formula = $"=B2";
 
 
 
 
 
-  
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
