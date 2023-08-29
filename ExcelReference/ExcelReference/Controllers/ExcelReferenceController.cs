@@ -205,11 +205,12 @@ namespace ExcelReference.Controllers
         for (int i = 2; i <= lastRow; i++)
         {
             string countryCell = $"A{i}";
+           worksheetCountries.Cells[$"B{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!D$2:D$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
             worksheetCountries.Cells[$"C{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!B$2:B$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
             worksheetCountries.Cells[$"D{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!C$2:C$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
         }
 
-        FileInfo fileInfo = new FileInfo("D:\\Csharpwork\\EOSEcxel\\CountryCities.xlsx");
+        FileInfo fileInfo = new FileInfo("D:\\Csharpwork\\CountryCities.xlsx");
         package.SaveAs(fileInfo);
     }
 
