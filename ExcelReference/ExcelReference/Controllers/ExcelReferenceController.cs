@@ -13,6 +13,7 @@ using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using OfficeOpenXml.DataValidation;
 using static Entity.Model.Utility;
 using Newtonsoft.Json;
+using Entity.FilterJson;
 
 namespace ExcelReference.Controllers
 {
@@ -171,7 +172,7 @@ namespace ExcelReference.Controllers
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using (var package = new ExcelPackage())
             {
-                // Create the "Countries" sheet with a dropdown list
+
                 var countries = new string[] { "USA", "Canada", "UK", "Australia" };
                 var worksheetCountries = package.Workbook.Worksheets.Add("Countries");
 
@@ -211,9 +212,10 @@ namespace ExcelReference.Controllers
                 for (int i = 2; i <= lastRow; i++)
                 {
                     string countryCell = $"A{i}";
-                    worksheetCountries.Cells[$"B{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!D$2:D$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
+
                     worksheetCountries.Cells[$"C{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!B$2:B$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
                     worksheetCountries.Cells[$"D{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!C$2:C$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
+                    worksheetCountries.Cells[$"B{i}"].Formula = $"=IF({countryCell}=\"\", \"\", IFERROR(INDEX(Cities!D$2:D$100, MATCH({countryCell}, Cities!A$2:A$100, 0)), \"\"))";
                 }
 
                 FileInfo fileInfo = new FileInfo("D:\\Csharpwork\\CountryCities.xlsx");
@@ -227,7 +229,7 @@ namespace ExcelReference.Controllers
         [HttpGet("GetSPID")]
         public object GetSPID()
         {
-            string jsonFilePath = @"D:\Csharpwork\JSon\SPID.json"; 
+            string jsonFilePath = @"D:\Csharpwork\JSon\SPID.json";
             string jsonString = System.IO.File.ReadAllText(jsonFilePath);
             Root person = JsonConvert.DeserializeObject<Root>(jsonString);
 
@@ -238,14 +240,94 @@ namespace ExcelReference.Controllers
                 .ToList();
 
             return Ok(utilityAccountNumbers);
+
+        }
+
+        [HttpGet("FilterJson")]
+        public object Filter(string? spid, string? EnrollmentStatusCode)
+        {
+            string jsonFilePath = @"D:\Csharpwork\Filter.json";
+            string jsonString = System.IO.File.ReadAllText(jsonFilePath);
+            List<FilterData> Item = JsonConvert.DeserializeObject<List<FilterData>>(jsonString);
+
+
+            var data = Item.FirstOrDefault(x => x.EnrollmentCustomer.BillingAccounts
+                 .SelectMany(a => a.ServiceAccounts)
+                 .Any(a => a.UtilityAccountNumber == spid));
+            object combinedData = null;
+            if (data != null)
+            {
+                var companyNameKana = data.EnrollmentCustomer.CompanyNameKana;
+                var FirstName = data.EnrollmentCustomer.FirstName;
+                var midelName = data.EnrollmentCustomer.MiddleName;
+                var SPID = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault();
+                var CustomerName = data.EnrollmentCustomer.CustomerName;
+                var area = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault();
+                var clientCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault();
+                var LoadProfileCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault();
+                var DivisionId = data.DivisionId;
+                var DivisionName = data.DivisionName;
+
+
+                combinedData = new
+                {
+                    CustomerName,
+                    companyNameKana,
+                    FirstName,
+                    midelName,
+                    SPID,
+                    area,
+                    clientCode,
+                    LoadProfileCode,
+                    DivisionId,
+                    DivisionName
+                };
+
+            }
+            var enrolement = Item.Where(a => a.EnrollmentStatusCode == EnrollmentStatusCode).ToList();
+
+            var enrolementCompanyNameKana = enrolement.Select(a => a.EnrollmentCustomer.CompanyNameKana).ToList();
+            var enrolementFirstName = enrolement.Select(a => a.EnrollmentCustomer.FirstName).ToList();
+            var entrolementMiddleName = enrolement.Select(a => a.EnrollmentCustomer.MiddleName).ToList();
+            var entrolementSpid = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.UtilityAccountNumber))).ToList();
+            var entrolementCustomerName = enrolement.Select(a => a.EnrollmentCustomer.CustomerName).ToList();
+            var entrolementarea = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.Area))).ToList();
+            var entrolementclientcode = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.ClientCode))).ToList();
+            var entrolementLoadProfileCode = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.LoadProfileCode))).ToList();
+            var entrolementDivisionId = enrolement.Select(a => a.DivisionId).ToList();
+            var entrolementDivisionName = enrolement.Select(a => a.DivisionName).ToList();
+
+            var enrolementCombinedData = new List<object>();
+
+            for (int i = 0; i < enrolementCompanyNameKana.Count; i++)
+            {
+                enrolementCombinedData.Add(new
+                {
+                    enrolementCompanyNameKana = enrolementCompanyNameKana[i],
+                    enrolementFirstName = enrolementFirstName[i],
+                    entrolementMiddleName = entrolementMiddleName[i],
+                    entrolementSpid = entrolementSpid[i],
+                    entrolementCustomerName = entrolementCustomerName[i],
+                    entrolementarea = entrolementarea[i],
+                    entrolementclientcode = entrolementclientcode[i],
+                    entrolementLoadProfileCode = entrolementLoadProfileCode[i],
+                    entrolementDivisionId = entrolementDivisionId[i],
+                    entrolementDivisionName = entrolementDivisionName[i]
+                });
+            }
+
+
+
+            return new
+            {
+                combinedData,
+                enrolementCombinedData
+            };
+    
         }
 
     }
 }
-
-
-
-
 
 
 

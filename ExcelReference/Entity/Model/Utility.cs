@@ -19,7 +19,7 @@ namespace Entity.Model
             public object ActivityLogSubCategoryName { get; set; }
             public bool IsInternalActivityLog { get; set; }
             public string ActivityLogText { get; set; }
-            public DateTime ActivityDate { get; set; }
+            public object ActivityDate { get; set; }
             public object CreatedUser { get; set; }
             public int ActivityLogCreatedUserId { get; set; }
             public List<object> Files { get; set; }
@@ -56,7 +56,7 @@ namespace Entity.Model
 
         public class AuthorizedContactList
         {
-            public DateTime BirthDate { get; set; }
+            public object BirthDate { get; set; }
             public bool IsPrimary { get; set; }
             public List<AuthorizedContactPhoneList> AuthorizedContactPhoneList { get; set; }
             public List<AuthorizedContactEmailList> AuthorizedContactEmailList { get; set; }
@@ -105,7 +105,7 @@ namespace Entity.Model
             public object SecondaryNotificationAddress { get; set; }
             public List<ServiceAccountList> ServiceAccountList { get; set; }
             public object BillDate { get; set; }
-            public DateTime SoldDate { get; set; }
+            public object SoldDate { get; set; }
             public List<AuthorizedContactList> AuthorizedContactList { get; set; }
             public string BillingAccountReferenceId { get; set; }
             public object IsBillHold { get; set; }
@@ -151,9 +151,9 @@ namespace Entity.Model
             public int ContractTerm { get; set; }
             public object ServiceTypeName { get; set; }
             public object ServiceTypeCode { get; set; }
-            public DateTime ContractStartDate { get; set; }
-            public DateTime ContractEndDate { get; set; }
-            public DateTime ContractSignedDate { get; set; }
+            public object ContractStartDate { get; set; }
+            public object ContractEndDate { get; set; }
+            public object ContractSignedDate { get; set; }
             public object ContractNumber { get; set; }
             public bool IsCreditRequirement { get; set; }
             public object ContractSource { get; set; }
@@ -174,8 +174,8 @@ namespace Entity.Model
 
         public class ContractDetailList
         {
-            public DateTime ContractStartDate { get; set; }
-            public DateTime ContractEndDate { get; set; }
+            public object ContractStartDate { get; set; }
+            public object ContractEndDate { get; set; }
             public object ChannelFee { get; set; }
             public object BrokerFee { get; set; }
             public object PromoCode { get; set; }
@@ -201,8 +201,8 @@ namespace Entity.Model
         public class ContractRateSegmentList
         {
             public string Term { get; set; }
-            public DateTime ContractStartDate { get; set; }
-            public DateTime ContractEndDate { get; set; }
+            public object ContractStartDate { get; set; }
+            public object ContractEndDate { get; set; }
             public List<ContractSegmentDetailList> ContractSegmentDetailList { get; set; }
             public string UtilityRateCode { get; set; }
         }
@@ -273,7 +273,7 @@ namespace Entity.Model
             public bool IsSenior { get; set; }
             public bool IsEmployee { get; set; }
             public int Last4SSN { get; set; }
-            public DateTime BirthDate { get; set; }
+            public object BirthDate { get; set; }
             public string DriverLicenseNumber { get; set; }
             public string CustomerName { get; set; }
             public string CustomerNameKana { get; set; }
@@ -328,7 +328,7 @@ namespace Entity.Model
             public object BillingAccountNumber { get; set; }
             public object VendorCode { get; set; }
             public object EffectiveStartDate { get; set; }
-            public DateTime AutopayTransferDate { get; set; }
+            public object AutopayTransferDate { get; set; }
             public bool IsDirectDebit { get; set; }
             public bool IsCreditCard { get; set; }
             public PaymentTokenData PaymentTokenData { get; set; }
@@ -451,8 +451,8 @@ namespace Entity.Model
 
         public class Transaction
         {
-            public DateTime ScheduledTransactionReleaseDate { get; set; }
-            public DateTime RequestedEffectiveDate { get; set; }
+            public object ScheduledTransactionReleaseDate { get; set; }
+            public object RequestedEffectiveDate { get; set; }
             public object EstimatedEffectiveDate { get; set; }
             public object AccessDescription { get; set; }
             public bool IsTransactionHold { get; set; }
