@@ -14,6 +14,7 @@ using OfficeOpenXml.DataValidation;
 using static Entity.Model.Utility;
 using Newtonsoft.Json;
 using Entity.FilterJson;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ExcelReference.Controllers
 {
@@ -244,7 +245,7 @@ namespace ExcelReference.Controllers
         }
 
         [HttpGet("FilterJson")]
-        public object Filter(string? spid, string? EnrollmentStatusCode)
+        public object Filter(string? spid, string? EnrollmentStatusCode, string? areas)
         {
             string jsonFilePath = @"D:\Csharpwork\Filter.json";
             string jsonString = System.IO.File.ReadAllText(jsonFilePath);
@@ -254,6 +255,7 @@ namespace ExcelReference.Controllers
             var data = Item.FirstOrDefault(x => x.EnrollmentCustomer.BillingAccounts
                  .SelectMany(a => a.ServiceAccounts)
                  .Any(a => a.UtilityAccountNumber == spid));
+
             object combinedData = null;
             if (data != null)
             {
@@ -285,7 +287,6 @@ namespace ExcelReference.Controllers
 
             }
             var enrolement = Item.Where(a => a.EnrollmentStatusCode == EnrollmentStatusCode).ToList();
-
             var enrolementCompanyNameKana = enrolement.Select(a => a.EnrollmentCustomer.CompanyNameKana).ToList();
             var enrolementFirstName = enrolement.Select(a => a.EnrollmentCustomer.FirstName).ToList();
             var entrolementMiddleName = enrolement.Select(a => a.EnrollmentCustomer.MiddleName).ToList();
@@ -296,7 +297,6 @@ namespace ExcelReference.Controllers
             var entrolementLoadProfileCode = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.LoadProfileCode))).ToList();
             var entrolementDivisionId = enrolement.Select(a => a.DivisionId).ToList();
             var entrolementDivisionName = enrolement.Select(a => a.DivisionName).ToList();
-
             var enrolementCombinedData = new List<object>();
 
             for (int i = 0; i < enrolementCompanyNameKana.Count; i++)
@@ -316,14 +316,67 @@ namespace ExcelReference.Controllers
                 });
             }
 
+            //var areadetails = Item.Select(a => a.QuotationDetails.Where(a => a.Area == QuotationDetails));
+
+            /*var datas = Item.FirstOrDefault(x => x.QuotationDetails
+                .Any(a => a.Area == area));*/
+
+
+            /*string strarea = $"{areas}";
+            var datas = Item
+            .Where(item => item.QuotationDetails != null &&
+                item.QuotationDetails.Any(detail =>
+                    detail.Area != null && detail.Area.Contains(strarea)))
+            .ToList();*/
+
+            /*var datass = Item.FirstOrDefault(x => x.EnrollmentCustomer.BillingAccounts
+                 .SelectMany(a => a.ServiceAccounts)
+                 .Any(a => a.UtilityAccountNumber == spid));*/
+
+            var datas = Item.FirstOrDefault(a => a.EnrollmentCustomer.BillingAccounts
+                        .SelectMany(a => a.ServiceAccounts).Any(a => a.Area == areas));
+
+            object areaDatas = null;
+            if (datas != null)
+            {
+                var companyNameKana = datas.EnrollmentCustomer.CompanyNameKana;
+                var FirstName = datas.EnrollmentCustomer.FirstName;
+                var midelName = datas.EnrollmentCustomer.MiddleName;
+                var SPID = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault();
+                var CustomerName = datas.EnrollmentCustomer.CustomerName;
+                var area = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault();
+                var clientCode = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault();
+                var LoadProfileCode = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault();
+                var DivisionId = datas.DivisionId;
+                var DivisionName = datas.DivisionName;
+
+
+                areaDatas = new
+                {
+                    CustomerName,
+                    companyNameKana,
+                    FirstName,
+                    midelName,
+                    SPID,
+                    area,
+                    clientCode,
+                    LoadProfileCode,
+                    DivisionId,
+                    DivisionName
+                };
+
+            }
+
 
 
             return new
             {
                 combinedData,
-                enrolementCombinedData
+                enrolementCombinedData,
+                areaDatas
+
             };
-    
+
         }
 
     }
