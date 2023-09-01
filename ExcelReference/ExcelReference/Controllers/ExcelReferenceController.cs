@@ -166,7 +166,6 @@ namespace ExcelReference.Controllers
             fileStreamResult.FileDownloadName = "Consumer.xlsx";
             return fileStreamResult;
         }
-
         [HttpGet("Country")]
         public object GetCountry()
         {
@@ -225,8 +224,6 @@ namespace ExcelReference.Controllers
 
             return "File created successfully";
         }
-
-
         [HttpGet("GetSPID")]
         public object GetSPID()
         {
@@ -316,7 +313,7 @@ namespace ExcelReference.Controllers
                 });
             }
 
-           
+
 
 
             var datas = Item.FirstOrDefault(a => a.EnrollmentCustomer.BillingAccounts
@@ -336,7 +333,7 @@ namespace ExcelReference.Controllers
                 var DivisionId = datas.DivisionId;
                 var DivisionName = datas.DivisionName;
 
-                if (areas!= null)
+                if (areas != null)
                 {
                     areaDatas = new
                     {
@@ -360,7 +357,6 @@ namespace ExcelReference.Controllers
                 combinedData,
                 enrolementCombinedData,
                 areaDatas
-
             };
 
         }
