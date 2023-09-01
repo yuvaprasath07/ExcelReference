@@ -253,28 +253,122 @@ namespace ExcelReference.Controllers
             string jsonString = System.IO.File.ReadAllText(jsonFilePath);
             List<FilterData> Item = JsonConvert.DeserializeObject<List<FilterData>>(jsonString);
 
-            var data = Item.FirstOrDefault(x =>x.EnrollmentCustomer.BillingAccounts
-                .Any(ba => ba.ServiceAccounts
-                .Any(sa => sa.UtilityAccountNumber == spid && x.EnrollmentStatusCode == EnrollmentStatusCode && sa.Area == areas)));
-
-            var response = new
+            if (spid != null || EnrollmentStatusCode != null || areas != null)
             {
-                UtlityAccountNumber = (data != null) ? new
+                var data = Item.FirstOrDefault(x => x.EnrollmentCustomer.BillingAccounts
+                  .SelectMany(a => a.ServiceAccounts)
+                  .Any(a => a.UtilityAccountNumber == spid));
+
+                object UtlityAccountNumber = null;
+                if (data != null)
                 {
-                    CustomerName = data.EnrollmentCustomer.CustomerName,
-                    companyNameKana = data.EnrollmentCustomer.CompanyNameKana,
-                    FirstName = data.EnrollmentCustomer.FirstName,
-                    midelName = data.EnrollmentCustomer.MiddleName,
-                    SPID = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault(),
-                    area = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault(),
-                    clientCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault(),
-                    LoadProfileCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault(),
-                    DivisionId = data.DivisionId,
-                    DivisionName = data.DivisionName
-                } : null,
-            };
-            return Ok(response);
+                    var companyNameKana = data.EnrollmentCustomer.CompanyNameKana;
+                    var FirstName = data.EnrollmentCustomer.FirstName;
+                    var midelName = data.EnrollmentCustomer.MiddleName;
+                    var SPID = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault();
+                    var CustomerName = data.EnrollmentCustomer.CustomerName;
+                    var area = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault();
+                    var clientCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault();
+                    var LoadProfileCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault();
+                    var DivisionId = data.DivisionId;
+                    var DivisionName = data.DivisionName;
+
+
+                    UtlityAccountNumber = new
+                    {
+                        CustomerName,
+                        companyNameKana,
+                        FirstName,
+                        midelName,
+                        SPID,
+                        area,
+                        clientCode,
+                        LoadProfileCode,
+                        DivisionId,
+                        DivisionName
+                    };
+
+                }
+
+
+                var enrolement = Item.Where(a => a.EnrollmentStatusCode == EnrollmentStatusCode).ToList();
+
+                var enrolementCompanyNameKana = enrolement.Select(a => a.EnrollmentCustomer.CompanyNameKana).ToList();
+                var enrolementFirstName = enrolement.Select(a => a.EnrollmentCustomer.FirstName).ToList();
+                var entrolementMiddleName = enrolement.Select(a => a.EnrollmentCustomer.MiddleName).ToList();
+                var entrolementSpid = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.UtilityAccountNumber))).ToList();
+                var entrolementCustomerName = enrolement.Select(a => a.EnrollmentCustomer.CustomerName).ToList();
+                var entrolementarea = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.Area))).ToList();
+                var entrolementclientcode = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.ClientCode))).ToList();
+                var entrolementLoadProfileCode = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.LoadProfileCode))).ToList();
+                var entrolementDivisionId = enrolement.Select(a => a.DivisionId).ToList();
+                var entrolementDivisionName = enrolement.Select(a => a.DivisionName).ToList();
+                var enrolementCombinedData = new List<object>();
+
+                for (int i = 0; i < enrolementCompanyNameKana.Count; i++)
+                {
+                    enrolementCombinedData.Add(new
+                    {
+                        enrolementCompanyNameKana = enrolementCompanyNameKana[i],
+                        enrolementFirstName = enrolementFirstName[i],
+                        entrolementMiddleName = entrolementMiddleName[i],
+                        entrolementSpid = entrolementSpid[i],
+                        entrolementCustomerName = entrolementCustomerName[i],
+                        entrolementarea = entrolementarea[i],
+                        entrolementclientcode = entrolementclientcode[i],
+                        entrolementLoadProfileCode = entrolementLoadProfileCode[i],
+                        entrolementDivisionId = entrolementDivisionId[i],
+                        entrolementDivisionName = entrolementDivisionName[i]
+                    });
+                }
+
+                var datas = Item.FirstOrDefault(a => a.EnrollmentCustomer.BillingAccounts
+                .SelectMany(a => a.ServiceAccounts).Any(a => a.Area == areas));
+
+                object areaDatas = null;
+                if (datas != null)
+                {
+                    var companyNameKana = datas.EnrollmentCustomer.CompanyNameKana;
+                    var FirstName = datas.EnrollmentCustomer.FirstName;
+                    var midelName = datas.EnrollmentCustomer.MiddleName;
+                    var SPID = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault();
+                    var CustomerName = datas.EnrollmentCustomer.CustomerName;
+                    var area = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault();
+                    var clientCode = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault();
+                    var LoadProfileCode = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault();
+                    var DivisionId = datas.DivisionId;
+                    var DivisionName = datas.DivisionName;
+
+                    if (areas != null)
+                    {
+                        areaDatas = new
+                        {
+                            CustomerName,
+                            companyNameKana,
+                            FirstName,
+                            midelName,
+                            SPID,
+                            area,
+                            clientCode,
+                            LoadProfileCode,
+                            DivisionId,
+                            DivisionName
+                        };
+                    }
+
+                }
+                return new
+                {
+                    UtlityAccountNumber,
+                    enrolementCombinedData,
+                    areaDatas
+                };
+            }
+            return Item;
+
         }
+
+
     }
 }
 
