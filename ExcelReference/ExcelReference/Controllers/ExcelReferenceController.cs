@@ -316,22 +316,8 @@ namespace ExcelReference.Controllers
                 });
             }
 
-            //var areadetails = Item.Select(a => a.QuotationDetails.Where(a => a.Area == QuotationDetails));
+           
 
-            /*var datas = Item.FirstOrDefault(x => x.QuotationDetails
-                .Any(a => a.Area == area));*/
-
-
-            /*string strarea = $"{areas}";
-            var datas = Item
-            .Where(item => item.QuotationDetails != null &&
-                item.QuotationDetails.Any(detail =>
-                    detail.Area != null && detail.Area.Contains(strarea)))
-            .ToList();*/
-
-            /*var datass = Item.FirstOrDefault(x => x.EnrollmentCustomer.BillingAccounts
-                 .SelectMany(a => a.ServiceAccounts)
-                 .Any(a => a.UtilityAccountNumber == spid));*/
 
             var datas = Item.FirstOrDefault(a => a.EnrollmentCustomer.BillingAccounts
                         .SelectMany(a => a.ServiceAccounts).Any(a => a.Area == areas));
@@ -350,24 +336,24 @@ namespace ExcelReference.Controllers
                 var DivisionId = datas.DivisionId;
                 var DivisionName = datas.DivisionName;
 
-
-                areaDatas = new
+                if (areas!= null)
                 {
-                    CustomerName,
-                    companyNameKana,
-                    FirstName,
-                    midelName,
-                    SPID,
-                    area,
-                    clientCode,
-                    LoadProfileCode,
-                    DivisionId,
-                    DivisionName
-                };
+                    areaDatas = new
+                    {
+                        CustomerName,
+                        companyNameKana,
+                        FirstName,
+                        midelName,
+                        SPID,
+                        area,
+                        clientCode,
+                        LoadProfileCode,
+                        DivisionId,
+                        DivisionName
+                    };
+                }
 
             }
-
-
 
             return new
             {
