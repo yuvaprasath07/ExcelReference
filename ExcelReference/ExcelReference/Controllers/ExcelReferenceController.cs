@@ -20,6 +20,7 @@ using NPOI.SS.Formula.Functions;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
 using NPOI.SS.Formula.PTG;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ExcelReference.Controllers
 {
@@ -247,130 +248,118 @@ namespace ExcelReference.Controllers
         }
 
         [HttpGet("FilterJson")]
-        public object Filter(string? spid, string? EnrollmentStatusCode, string? areas)
+        public IActionResult Filter(string? spidnumber, string? EnrollmentStatusCode, string? areas)
         {
-            string jsonFilePath = @"D:\Csharpwork\Filter.json";
-            string jsonString = System.IO.File.ReadAllText(jsonFilePath);
-            List<FilterData> Item = JsonConvert.DeserializeObject<List<FilterData>>(jsonString);
-
-            if (spid != null || EnrollmentStatusCode != null || areas != null)
+            try
             {
-                var data = Item.FirstOrDefault(x => x.EnrollmentCustomer.BillingAccounts
-                  .SelectMany(a => a.ServiceAccounts)
-                  .Any(a => a.UtilityAccountNumber == spid));
+                string jsonFilePath = @"D:\Csharpwork\Filter.json";
+                string jsonString = System.IO.File.ReadAllText(jsonFilePath);
+                List<FilterData> items = JsonConvert.DeserializeObject<List<FilterData>>(jsonString);
 
-                object UtlityAccountNumber = null;
-                if (data != null)
+                List<FilterJsonModel> filteredData = new List<FilterJsonModel>();
+
+                if (spidnumber != null || EnrollmentStatusCode != null || areas != null)
                 {
-                    var companyNameKana = data.EnrollmentCustomer.CompanyNameKana;
-                    var FirstName = data.EnrollmentCustomer.FirstName;
-                    var midelName = data.EnrollmentCustomer.MiddleName;
-                    var SPID = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault();
-                    var CustomerName = data.EnrollmentCustomer.CustomerName;
-                    var area = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault();
-                    var clientCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault();
-                    var LoadProfileCode = data.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault();
-                    var DivisionId = data.DivisionId;
-                    var DivisionName = data.DivisionName;
-
-
-                    UtlityAccountNumber = new
+                    switch (spidnumber)
                     {
-                        CustomerName,
-                        companyNameKana,
-                        FirstName,
-                        midelName,
-                        SPID,
-                        area,
-                        clientCode,
-                        LoadProfileCode,
-                        DivisionId,
-                        DivisionName
-                    };
+                        case not null when spidnumber != "":
+                            var spidData = items.Where(x => x.EnrollmentCustomer.BillingAccounts
+                                .SelectMany(a => a.ServiceAccounts)
+                                .Any(a => a.UtilityAccountNumber == spidnumber));
 
-                }
-
-
-                var enrolement = Item.Where(a => a.EnrollmentStatusCode == EnrollmentStatusCode).ToList();
-
-                var enrolementCompanyNameKana = enrolement.Select(a => a.EnrollmentCustomer.CompanyNameKana).ToList();
-                var enrolementFirstName = enrolement.Select(a => a.EnrollmentCustomer.FirstName).ToList();
-                var entrolementMiddleName = enrolement.Select(a => a.EnrollmentCustomer.MiddleName).ToList();
-                var entrolementSpid = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.UtilityAccountNumber))).ToList();
-                var entrolementCustomerName = enrolement.Select(a => a.EnrollmentCustomer.CustomerName).ToList();
-                var entrolementarea = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.Area))).ToList();
-                var entrolementclientcode = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.ClientCode))).ToList();
-                var entrolementLoadProfileCode = enrolement.SelectMany(a => a.EnrollmentCustomer.BillingAccounts.SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.LoadProfileCode))).ToList();
-                var entrolementDivisionId = enrolement.Select(a => a.DivisionId).ToList();
-                var entrolementDivisionName = enrolement.Select(a => a.DivisionName).ToList();
-                var enrolementCombinedData = new List<object>();
-
-                for (int i = 0; i < enrolementCompanyNameKana.Count; i++)
-                {
-                    enrolementCombinedData.Add(new
-                    {
-                        enrolementCompanyNameKana = enrolementCompanyNameKana[i],
-                        enrolementFirstName = enrolementFirstName[i],
-                        entrolementMiddleName = entrolementMiddleName[i],
-                        entrolementSpid = entrolementSpid[i],
-                        entrolementCustomerName = entrolementCustomerName[i],
-                        entrolementarea = entrolementarea[i],
-                        entrolementclientcode = entrolementclientcode[i],
-                        entrolementLoadProfileCode = entrolementLoadProfileCode[i],
-                        entrolementDivisionId = entrolementDivisionId[i],
-                        entrolementDivisionName = entrolementDivisionName[i]
-                    });
-                }
-
-                var datas = Item.FirstOrDefault(a => a.EnrollmentCustomer.BillingAccounts
-                .SelectMany(a => a.ServiceAccounts).Any(a => a.Area == areas));
-
-                object areaDatas = null;
-                if (datas != null)
-                {
-                    var companyNameKana = datas.EnrollmentCustomer.CompanyNameKana;
-                    var FirstName = datas.EnrollmentCustomer.FirstName;
-                    var midelName = datas.EnrollmentCustomer.MiddleName;
-                    var SPID = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault();
-                    var CustomerName = datas.EnrollmentCustomer.CustomerName;
-                    var area = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault();
-                    var clientCode = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault();
-                    var LoadProfileCode = datas.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault();
-                    var DivisionId = datas.DivisionId;
-                    var DivisionName = datas.DivisionName;
-
-                    if (areas != null)
-                    {
-                        areaDatas = new
-                        {
-                            CustomerName,
-                            companyNameKana,
-                            FirstName,
-                            midelName,
-                            SPID,
-                            area,
-                            clientCode,
-                            LoadProfileCode,
-                            DivisionId,
-                            DivisionName
-                        };
+                            filteredData.AddRange(spidData.Select(item => new FilterJsonModel
+                            {
+                                CompanyNameKana = item.EnrollmentCustomer.CompanyNameKana,
+                                FirstName = item.EnrollmentCustomer.FirstName,
+                                MiddleName = item.EnrollmentCustomer.MiddleName,
+                                SPID = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault(),
+                                customerName = item.EnrollmentCustomer.CustomerName,
+                                Area = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault(),
+                                ClientCode = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault(),
+                                LoadProfileCode = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault(),
+                                DivisionId = item.DivisionId,
+                                DivisionName = item.DivisionName
+                            }));
+                            break;
                     }
 
-                }
-                return new
-                {
-                    UtlityAccountNumber,
-                    enrolementCombinedData,
-                    areaDatas
-                };
-            }
-            return Item;
+                    switch (EnrollmentStatusCode)
+                    {
+                        case not null when EnrollmentStatusCode != "":
+                            var enrollmentData = items.Where(a => a.EnrollmentStatusCode == EnrollmentStatusCode);
 
+                            filteredData.AddRange(enrollmentData.Select(item => new FilterJsonModel
+                            {
+                                CompanyNameKana = item.EnrollmentCustomer.CompanyNameKana,
+                                FirstName = item.EnrollmentCustomer.FirstName,
+                                MiddleName = item.EnrollmentCustomer.MiddleName,
+                                SPID = item.EnrollmentCustomer.BillingAccounts
+                                                        .SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.UtilityAccountNumber))
+                                                        .FirstOrDefault(),
+                                customerName = item.EnrollmentCustomer.CustomerName,
+                                Area = item.EnrollmentCustomer.BillingAccounts
+                                                        .SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.Area))
+                                                        .FirstOrDefault(),
+                                ClientCode = item.EnrollmentCustomer.BillingAccounts
+                                                        .SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.ClientCode))
+                                                        .FirstOrDefault(),
+                                LoadProfileCode = item.EnrollmentCustomer.BillingAccounts
+                                                        .SelectMany(ba => ba.ServiceAccounts.Select(sa => sa.LoadProfileCode))
+                                                        .FirstOrDefault(),
+                                DivisionId = item.DivisionId,
+                                DivisionName = item.DivisionName
+                            }));
+                            break;
+                    }
+
+                    switch (areas)
+                    {
+                        case not null when areas != "":
+                            var areaData = items.Where(a => a.EnrollmentCustomer.BillingAccounts
+                                .SelectMany(a => a.ServiceAccounts)
+                                .Any(a => a.Area == areas));
+
+                            filteredData.AddRange(areaData.Select(item => new FilterJsonModel
+                            {
+                                CompanyNameKana = item.EnrollmentCustomer.CompanyNameKana,
+                                FirstName = item.EnrollmentCustomer.FirstName,
+                                MiddleName = item.EnrollmentCustomer.MiddleName,
+                                SPID = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.UtilityAccountNumber)).FirstOrDefault(),
+                                customerName = item.EnrollmentCustomer.CustomerName,
+                                Area = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.Area)).FirstOrDefault(),
+                                ClientCode = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.ClientCode)).FirstOrDefault(),
+                                LoadProfileCode = item.EnrollmentCustomer.BillingAccounts.SelectMany(a => a.ServiceAccounts.Select(sa => sa.LoadProfileCode)).FirstOrDefault(),
+                                DivisionId = item.DivisionId,
+                                DivisionName = item.DivisionName
+                            }));
+                            break;
+                    }
+                }
+                else
+                {
+                    return Ok(items);
+                }
+
+                if (filteredData.Count > 0)
+                {
+                    return Ok(new { FilteredData = filteredData });
+                }
+                else
+                {
+                    return NotFound("No matching data found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
         }
 
 
     }
+
 }
+
 
 
 
